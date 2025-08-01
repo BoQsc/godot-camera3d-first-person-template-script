@@ -1,45 +1,31 @@
-@tool
-extends EditorPlugin
+# meta-description: Camera for CharacterBody3D
+extends Camera3D
 
-const ADDON_TEMPLATES = "res://addons/camera3d_templates/script_templates/"
-const PROJECT_TEMPLATES = "res://script_templates/"
+const MOUSE_SENSITIVITY = 0.002
 
-func _enter_tree():
-	# Ensure project templates directory exists
-	if not DirAccess.dir_exists_absolute(PROJECT_TEMPLATES + "Camera3D/"):
-		DirAccess.open("res://").make_dir_recursive_absolute(PROJECT_TEMPLATES + "Camera3D/")
+func _ready() -> void:
+	if not get_parent() is CharacterBody3D:
+		push_warning("Camera3D requiresz CharacterBody3D as parent! Current parent is: " + str(get_parent().get_class()))
 	
-	# Sync templates from addon to project location
-	sync_templates()
-	print("Camera3D templates synced!")
+	
+	# Capture the mouse cursor for first-person controls
+	Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
-func _exit_tree():
-	# Remove synced templates when plugin disabled
-	remove_synced_templates()
-	print("Camera3D templates removed!")
-
-func sync_templates():
-	var addon_dir = DirAccess.open(ADDON_TEMPLATES + "Camera3D/")
-	if addon_dir:
-		addon_dir.list_dir_begin()
-		var file_name = addon_dir.get_next()
-		while file_name != "":
-			if file_name.ends_with(".gd"):
-				copy_template_file(file_name)
-			file_name = addon_dir.get_next()
-
-func copy_template_file(filename: String):
-	var source = FileAccess.open(ADDON_TEMPLATES + "Camera3D/" + filename, FileAccess.READ)
-	if source:
-		var content = source.get_as_text()
-		source.close()
+func _input(event: InputEvent) -> void:
+	# Handle mouse look
+	if event is InputEventMouseMotion and Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+		# Rotate parent horizontally (yaw)
+		get_parent().rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
 		
-		var dest = FileAccess.open(PROJECT_TEMPLATES + "Camera3D/" + filename, FileAccess.WRITE)
-		if dest:
-			dest.store_string(content)
-			dest.close()
+		# Rotate camera vertically (pitch)
+		rotate_object_local(Vector3.RIGHT, -event.relative.y * MOUSE_SENSITIVITY)
+		
+		# Clamp vertical rotation to prevent flipping
+		rotation.x = clamp(rotation.x, deg_to_rad(-90), deg_to_rad(90))
 
-func remove_synced_templates():
-	# Remove only the templates we added
-	DirAccess.open("res://").remove_absolute(PROJECT_TEMPLATES + "Camera3D/character_first_person.gd")
-	DirAccess.open("res://").remove_absolute(PROJECT_TEMPLATES + "Camera3D/first_person_free_floating.gd")
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED:
+			Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		else:
+			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)

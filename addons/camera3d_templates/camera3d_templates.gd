@@ -1,48 +1,45 @@
 @tool
 extends EditorPlugin
 
-const TEMPLATES_SOURCE_PATH = "res://addons/camera3d_templates/script_templates/"
-const TEMPLATES_DEST_PATH = "res://script_templates/Camera3D/"
+const ADDON_TEMPLATES = "res://addons/camera3d_templates/script_templates/"
+const PROJECT_TEMPLATES = "res://script_templates/"
 
 func _enter_tree():
-	# Create the script_templates/Camera3D directory
-	if not DirAccess.dir_exists_absolute(TEMPLATES_DEST_PATH):
-		DirAccess.open("res://").make_dir_recursive_absolute(TEMPLATES_DEST_PATH)
+	# Ensure project templates directory exists
+	if not DirAccess.dir_exists_absolute(PROJECT_TEMPLATES + "Camera3D/"):
+		DirAccess.open("res://").make_dir_recursive_absolute(PROJECT_TEMPLATES + "Camera3D/")
 	
-	# Copy template files to project's script_templates folder
-	copy_template("character_first_person.gd")
-	copy_template("first_person_free_floating.gd")
-	
-	# Refresh the file system so Godot sees the new templates
-	EditorInterface.get_resource_filesystem().scan()
-	
-	print("Camera3D templates installed!")
+	# Sync templates from addon to project location
+	sync_templates()
+	print("Camera3D templates synced!")
 
 func _exit_tree():
-	# Remove template files
-	remove_template("character_first_person.gd")
-	remove_template("first_person_free_floating.gd")
-	
-	EditorInterface.get_resource_filesystem().scan()
+	# Remove synced templates when plugin disabled
+	remove_synced_templates()
 	print("Camera3D templates removed!")
 
-func copy_template(filename: String):
-	var source_path = TEMPLATES_SOURCE_PATH + filename
-	var dest_path = TEMPLATES_DEST_PATH + filename
-	
-	var source = FileAccess.open(source_path, FileAccess.READ)
+func sync_templates():
+	var addon_dir = DirAccess.open(ADDON_TEMPLATES + "Camera3D/")
+	if addon_dir:
+		addon_dir.list_dir_begin()
+		var file_name = addon_dir.get_next()
+		while file_name != "":
+			if file_name.ends_with(".gd"):
+				copy_template_file(file_name)
+			file_name = addon_dir.get_next()
+
+func copy_template_file(filename: String):
+	var source = FileAccess.open(ADDON_TEMPLATES + "Camera3D/" + filename, FileAccess.READ)
 	if source:
 		var content = source.get_as_text()
 		source.close()
 		
-		var dest = FileAccess.open(dest_path, FileAccess.WRITE)
+		var dest = FileAccess.open(PROJECT_TEMPLATES + "Camera3D/" + filename, FileAccess.WRITE)
 		if dest:
 			dest.store_string(content)
 			dest.close()
-			print("Copied: ", filename)
 
-func remove_template(filename: String):
-	var file_path = TEMPLATES_DEST_PATH + filename
-	if FileAccess.file_exists(file_path):
-		DirAccess.open("res://").remove_absolute(file_path)
-		print("Removed: ", filename)
+func remove_synced_templates():
+	# Remove only the templates we added
+	DirAccess.open("res://").remove_absolute(PROJECT_TEMPLATES + "Camera3D/character_first_person.gd")
+	DirAccess.open("res://").remove_absolute(PROJECT_TEMPLATES + "Camera3D/first_person_free_floating.gd")
