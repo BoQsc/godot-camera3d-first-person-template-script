@@ -5,7 +5,7 @@ const MOUSE_SENSITIVITY = 0.002
 
 func _ready() -> void:
 	if not get_parent() is CharacterBody3D:
-		push_warning("Camera3D requiresz CharacterBody3D as parent! Current parent is: " + str(get_parent().get_class()))
+		push_warning("Camera3D requires CharacterBody3D as parent! Current parent is: " + str(get_parent().get_class()))
 	
 	
 	# Capture the mouse cursor for first-person controls
