@@ -1,3 +1,4 @@
+# Original filename: Godot.gitignore
 # Godot 4+ specific ignores
 .godot/
 *.gd.uid
