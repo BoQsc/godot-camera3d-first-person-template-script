@@ -41,5 +41,5 @@ func copy_template_file(filename: String):
 
 func remove_synced_templates():
 	# Remove only the templates we added
-	DirAccess.open("res://").remove_absolute(PROJECT_TEMPLATES + "Camera3D/character_first_person.gd")
+	DirAccess.open("res://").remove_absolute(PROJECT_TEMPLATES + "Camera3D/first_person_character.gd")
 	DirAccess.open("res://").remove_absolute(PROJECT_TEMPLATES + "Camera3D/first_person_free_floating.gd")
